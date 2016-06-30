@@ -1,4 +1,4 @@
-import java.util.concurrent.TimeUnit
+import java.time.LocalDateTime
 
 import cats.{Monad, ~>}
 import cats.free.{Free, FreeApplicative}
@@ -7,18 +7,20 @@ import monix.eval.Task
 import monix.cats._
 
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration._
 
 object Main {
+
+  import Interpreters._
 
   implicit val scheduler = monix.execution.Scheduler.fixedPool("appThreadPool", 10)
 
   def main(args: Array[String])  {
-    println("Starting")
-    val task = Interpreters.ApplicativeScriptInterpreter.run[Int](App.apply())
-    val result = Await.result(task.runAsync, Duration(10, TimeUnit.SECONDS))
-    println(s"Result is $result")
-    println("Finished")
+    log("Starting")
+    val task = ApplicativeScriptInterpreter.run[Int](App.apply())
+    val result = Await.result(task.runAsync, 10.seconds)
+    log(s"Result is $result")
+    log("Finished")
   }
 }
 
@@ -47,13 +49,21 @@ object App {
 object Interpreters {
   import App.{AppScript, MonadicScript}
 
+  def log(s: String) = println(s"${LocalDateTime.now()} - $s")
+
   implicitly[Monad[Task]]
 
   object MonadicScriptInterpreter extends (Action ~> Task) {
     override def apply[A](action: Action[A]): Task[A] = action match {
-      case Action1(i) => Task.defer(Task.now(i + 1))
-      case Action2(i) => Task.defer(Task.now(i + 2))
-      case Action3(i) => Task.defer(Task.now(i + 3))
+      case Action1(i) => {
+        Task.defer(Task.now { log("Started Action1"); i + 1 }).delayExecution(2.seconds)
+      }
+      case Action2(i) => {
+        Task.defer(Task.now { log("Started Action2"); i + 2 }).delayExecution(5.seconds)
+      }
+      case Action3(i) => {
+        Task.defer(Task.now { log("Started Action3"); i + 3 })
+      }
     }
 
     def run[A](script: MonadicScript[A]): Task[A] = script.foldMap(this)
