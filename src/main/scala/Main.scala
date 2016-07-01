@@ -56,13 +56,13 @@ object Interpreters {
   object MonadicScriptInterpreter extends (Action ~> Task) {
     override def apply[A](action: Action[A]): Task[A] = action match {
       case Action1(i) => {
-        Task.defer(Task.now { log("Started Action1"); i + 1 }).delayExecution(2.seconds)
+        Task.apply { log("Started Action1"); i + 1 }.map(x=> { log("Finished Action1"); x } )
       }
       case Action2(i) => {
-        Task.defer(Task.now { log("Started Action2"); i + 2 }).delayExecution(5.seconds)
+        Task.apply { log("Started Action2"); i + 2 }.delayResult(5.seconds).map(x=> { log("Finished Action2"); x } )
       }
       case Action3(i) => {
-        Task.defer(Task.now { log("Started Action3"); i + 3 })
+        Task.apply { log("Started Action3"); i + 3 }.map(x=> { log("Finished Action3"); x } )
       }
     }
 

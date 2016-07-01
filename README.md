@@ -27,11 +27,12 @@ I've delayed execution of action2 for 5 seconds and action 3 ends up only starti
 This is the output I get for example:
 
 ```
-2016-07-01T09:52:09.386 - Starting
-2016-07-01T09:52:09.545 - Started Action1
-2016-07-01T09:52:14.746 - Started Action2
-2016-07-01T09:52:14.747 - Started Action3
-2016-07-01T09:52:14.752 - Result is 26
+2016-07-01T16:20:16.339 - Started Action1
+2016-07-01T16:20:16.342 - Finished Action1
+2016-07-01T16:20:16.359 - Started Action2
+2016-07-01T16:20:21.370 - Finished Action2
+2016-07-01T16:20:21.373 - Started Action3
+2016-07-01T16:20:21.373 - Finished Action3
 ```
 
 See the code [here](src/main/scala/Main.scala).
