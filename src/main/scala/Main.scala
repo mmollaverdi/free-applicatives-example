@@ -10,8 +10,7 @@ import scala.concurrent.duration._
 
 object Main {
 
-  import monix.cats._
-  implicitly[Applicative[Task]]
+  import TaskApplicativeInstance.TaskApplicative
 
   implicit val scheduler = monix.execution.Scheduler.fixedPool("appThreadPool", 10, executionModel = AlwaysAsyncExecution)
 
@@ -29,4 +28,11 @@ object Main {
   private def log(s: String) = println(s"${LocalDateTime.now()} - $s")
 }
 
+object TaskApplicativeInstance {
+  implicit val TaskApplicative: Applicative[Task] = new Applicative[Task] {
+    override def pure[A](x: A): Task[A] = Task.now(x)
+
+    override def ap[A, B](ff: Task[A => B])(fa: Task[A]): Task[B] = Task.mapBoth(ff, fa)((f, a) => f(a))
+  }
+}
 
