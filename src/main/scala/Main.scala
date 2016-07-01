@@ -1,10 +1,9 @@
 import java.time.LocalDateTime
 
-import cats.{Monad, ~>}
+import cats.{Applicative, Monad, ~>}
 import cats.free.{Free, FreeApplicative}
 import cats.syntax.cartesian._
 import monix.eval.Task
-import monix.cats._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -21,6 +20,14 @@ object Main {
     val result = Await.result(task.runAsync, 10.seconds)
     log(s"Result is $result")
     log("Finished")
+  }
+}
+
+object TaskApplicativeInstance {
+  implicit val TaskApplicative: Applicative[Task] = new Applicative[Task] {
+    override def pure[A](x: A): Task[A] = Task.now(x)
+
+    override def ap[A, B](ff: Task[A => B])(fa: Task[A]): Task[B] = Task.mapBoth(ff, fa)((f, a) => f(a))
   }
 }
 
@@ -51,9 +58,11 @@ object Interpreters {
 
   def log(s: String) = println(s"${LocalDateTime.now()} - $s")
 
-  implicitly[Monad[Task]]
-
   object MonadicScriptInterpreter extends (Action ~> Task) {
+
+    import monix.cats._
+    implicitly[Monad[Task]]
+
     override def apply[A](action: Action[A]): Task[A] = action match {
       case Action1(i) => {
         Task.apply { log("Started Action1"); i + 1 }.map(x=> { log("Finished Action1"); x } )
@@ -70,7 +79,13 @@ object Interpreters {
   }
 
   object ApplicativeScriptInterpreter extends (MonadicScript ~> Task) {
-    def run[A](script: AppScript[A]): Task[A] = script.foldMap(this)
+
+    import TaskApplicativeInstance._
+
+    def run[A](script: AppScript[A]): Task[A] = {
+      println(s"script $script")
+      script.foldMap(this)
+    }
 
     override def apply[A](script: MonadicScript[A]): Task[A] = MonadicScriptInterpreter.run(script)
   }

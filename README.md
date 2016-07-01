@@ -19,6 +19,7 @@ type AppScript[A] = FreeApplicative[MonadicScript, A]
 ```
 
 So effectively, a free applicative of free of actions.
+See the code [here](src/main/scala/Main.scala).
 
 **But everything ends up running sequentially.**
 
@@ -35,4 +36,15 @@ This is the output I get for example:
 2016-07-01T16:20:21.373 - Finished Action3
 ```
 
-See the code [here](src/main/scala/Main.scala).
+Replacing the monix-cats Monad instance with a custom Applicative instance though fixes the problem:
+
+```
+2016-07-01T16:33:36.790 - Started Action3
+2016-07-01T16:33:36.790 - Finished Action3
+2016-07-01T16:33:36.791 - Started Action1
+2016-07-01T16:33:36.791 - Finished Action1
+2016-07-01T16:33:36.799 - Started Action2
+2016-07-01T16:33:41.805 - Finished Action2
+```
+
+
